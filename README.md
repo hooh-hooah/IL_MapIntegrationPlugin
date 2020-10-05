@@ -1,14 +1,12 @@
-# Stop Bothing Me!
+# Map Integration Plugin
 
 ## Description
 
-This is small collection of scripts to resolve mind-boggling stuff or bugs.
+Map Integration for the main-game
 
 ## Target Games
 
-* Honey Select 2
 * AI-Shoujyo
 
 ## What it does
 
-* 2020-08-22: Added Light Probe Cleaner.
