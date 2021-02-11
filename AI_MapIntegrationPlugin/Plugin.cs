@@ -1,27 +1,22 @@
 ﻿using System.Linq;
+using System.Xml.Linq;
 using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.Harmony;
 using BepInEx.Logging;
-using MapIntegration.Utility;
+using HarmonyLib;
+using MapIntegration;
 using MapIntegrationPluginComponents;
 
 [BepInPlugin(Constant.GUID, "AI_MapIntegrationPlugin", Constant.VERSION)]
 [BepInDependency(Sideloader.Sideloader.GUID)]
 public class MapIntegrationPlugin : BaseUnityPlugin
 {
-    public const string GUID = "com.hooh.heelz";
-    public const string VERSION = "1.13.0";
-
     internal new static ManualLogSource Logger;
 
     private void Start()
     {
         Logger = base.Logger;
-        HarmonyLib.Harmony.CreateAndPatchAll(typeof(MapHooks));
-        Integration.Logger = Logger;
         MapHooks.Logger = Logger;
-        MapHooks.InitializeOpcodePatch();
+        MapHooks.InstallHooks();
 
         foreach (var xDocument in Sideloader.Sideloader.Manifests.Values.Where(x => x.manifestDocument != null).Select(x => x.manifestDocument))
         {
@@ -29,13 +24,17 @@ public class MapIntegrationPlugin : BaseUnityPlugin
             var root = xDocument.Element("manifest");
             if (root == null) continue;
 
-            foreach (var maps in root.Elements("ai-maps"))
+            foreach (var data in root.Elements("ai-maps")?.Elements("map-data"))
             {
-                foreach (var data in maps.Elements("map-data"))
-                {
-                    Integration.RegisterMapData(data);
-                }
+                if (!CustomMapInformation.TryMakeFromXML(data, out var result)) continue;
+                Data.CustomMapInformations.Add(result.ID, result);
             }
+        }
+
+        Logger.LogWarning($"Map Integration Plugin found {Data.CustomMapInformations.Count} maps from the mod folder");
+        foreach (var data in Data.CustomMapInformations.Values)
+        {
+            Logger.LogWarning($"Map Integration Plugin successfully Registered Custom Map {data.Name}({data.ID}).");
         }
     }
 }
